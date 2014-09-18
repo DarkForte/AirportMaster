@@ -32,12 +32,10 @@
 
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
-
-
-
-
-
-
+//全局变量
+const int INF = 1<<30;
+const int DFUEL = 5;
+const int LANE_TIME = 1;
 
 
 

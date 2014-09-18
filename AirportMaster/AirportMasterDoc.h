@@ -4,7 +4,10 @@
 
 
 #pragma once
-
+#include "Queue.h"
+#include "Lane.h"
+#include <fstream>
+using namespace std;
 
 class CAirportMasterDoc : public CDocument
 {
@@ -14,9 +17,16 @@ protected: // 仅从序列化创建
 
 // 特性
 public:
-
+	CQueue take_off_q, land_q, emergency_q;
+	CLane lane[4];
+	ifstream fin;
+	int now_time;
+	CAirplane next_plane;
 // 操作
 public:
+	void ArrangeLanes();
+	bool ReadNext(CAirplane &target);
+	bool NextStep();
 
 // 重写
 public:

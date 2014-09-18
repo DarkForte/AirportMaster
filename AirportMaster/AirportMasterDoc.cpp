@@ -10,8 +10,14 @@
 #endif
 
 #include "AirportMasterDoc.h"
+#include "Queue.h"
+#include "Lane.h"
 
 #include <propkey.h>
+#include <fstream>
+#include <string>
+
+using namespace std;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,7 +36,11 @@ END_MESSAGE_MAP()
 CAirportMasterDoc::CAirportMasterDoc()
 {
 	// TODO: 在此添加一次性构造代码
+	srand(unsigned(time(0)));
 
+	fin.open("input\\air_input.txt");
+	ReadNext(next_plane);
+	now_time = next_plane.time - 1;
 }
 
 CAirportMasterDoc::~CAirportMasterDoc()
@@ -47,9 +57,6 @@ BOOL CAirportMasterDoc::OnNewDocument()
 
 	return TRUE;
 }
-
-
-
 
 // CAirportMasterDoc 序列化
 
@@ -133,5 +140,146 @@ void CAirportMasterDoc::Dump(CDumpContext& dc) const
 }
 #endif //_DEBUG
 
-
 // CAirportMasterDoc 命令
+void CAirportMasterDoc::ArrangeLanes()
+{
+	//Emergency
+	int i;
+	while(emergency_q.empty() == false)
+	{
+		CAirplane now_plane = emergency_q.front();
+		emergency_q.pop();
+
+		for(i=3;i>=1;i--)
+		{
+			if(lane[i].empty())
+			{
+				lane[i].assign(now_plane, now_time + LANE_TIME);
+				break;
+			}
+		}
+
+	}
+
+	//take off special
+	if(lane[3].empty() && !take_off_q.empty() )
+	{
+		CAirplane plane_off = take_off_q.front();
+		take_off_q.pop();
+		lane[3].assign(plane_off, now_time + LANE_TIME);
+	}
+
+	i=2;
+	while( i>=1 && !(take_off_q.empty() && land_q.empty() ) )
+	{
+		CAirplane plane_land;
+		CAirplane plane_go;
+		if(land_q.empty() == false)
+			 plane_land = land_q.front();
+		else
+			plane_land.time = INF;
+
+		if(take_off_q.empty() == false)
+			plane_go = take_off_q.front();
+		else
+			plane_go.time = INF;
+
+		if(plane_go.time < plane_land.time)
+		{
+			lane[i] .assign( plane_go, now_time + LANE_TIME);
+			take_off_q.pop();
+			i--;
+		}
+		else
+		{
+			lane[i] .assign( plane_land, now_time + LANE_TIME);
+			land_q.pop();
+			i--;
+		}
+	}
+	return;
+}
+
+int StringToTime(string input)
+{
+	int hour = 10*(input[0]-'0') + (input[1] - '0');
+	int min = 10*(input[3]-'0') + (input[4]- '0');
+
+	return hour * 60 + min;
+}
+
+bool CAirportMasterDoc::ReadNext(CAirplane &target)
+{
+	string plane_name, go_time, arrive_time;
+	if(fin>>plane_name>>go_time>>arrive_time == false)
+	{
+		return false;
+	}
+	
+	plane_name[plane_name.length()-1] = '\0';
+	target.id = plane_name;
+
+	if(go_time.length() < 5)//"00:00,"
+	{
+		target.arrive = true;
+		target.fuel = rand() % (100-10) + 10; 
+	}
+	else
+	{
+		target.arrive = false;
+		target.time = StringToTime(go_time);
+	}
+
+	if(arrive_time.length() >= 5) //"00:00"
+		target.time = StringToTime(arrive_time);
+
+	return true;
+}
+
+bool CAirportMasterDoc::NextStep()
+{
+	now_time++;
+	//clear lanes
+	int i;
+	for(i=1; i<=3; i++)
+	{
+		if(now_time == lane[i].leave_time)
+		{
+			lane[i].clear();
+		}
+	}
+
+	//arrange lanes
+	ArrangeLanes();
+
+	//process new plane
+	while(next_plane.time == now_time)
+	{
+		if(next_plane.arrive == true)
+		{
+			land_q.push(next_plane);
+		}
+		else
+		{
+			take_off_q.push(next_plane);
+		}
+
+		bool ok = ReadNext(next_plane);
+		if(!ok)
+		{// still have to wait until all lane empty
+			bool all_lane_empty = true;
+			for(i=1; i<=3; i++)
+			{
+				if(lane[i].empty() == false)
+				{
+					all_lane_empty = false;
+					break;
+				}
+			}
+			if(all_lane_empty)
+				return false;
+		}
+	}
+
+	return true;
+}

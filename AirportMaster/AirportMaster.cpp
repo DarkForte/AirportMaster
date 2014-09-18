@@ -103,6 +103,10 @@ BOOL CAirportMasterApp::InitInstance()
 		return FALSE;
 
 	// 唯一的一个窗口已初始化，因此显示它并对其进行更新
+
+	m_pMainWnd->SetWindowPos(CWnd::FromHandle(HWND_NOTOPMOST),90,20,1300,830,
+		SWP_FRAMECHANGED|SWP_SHOWWINDOW);
+
 	m_pMainWnd->ShowWindow(SW_SHOW);
 	m_pMainWnd->UpdateWindow();
 	return TRUE;
