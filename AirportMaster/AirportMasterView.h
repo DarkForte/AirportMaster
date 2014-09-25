@@ -20,6 +20,8 @@ public:
 	CImage basic_ui;
 	CImage plane_icon;
 
+	CEdit *p_edit;
+
 // 操作
 public:
 
@@ -47,6 +49,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	virtual void OnInitialUpdate();
 };
 
 #ifndef _DEBUG  // AirportMasterView.cpp 中的调试版本

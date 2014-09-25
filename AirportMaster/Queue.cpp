@@ -6,6 +6,7 @@
 CQueue::CQueue(void)
 {
 	head = tail = NULL;
+	cnt = 0;
 }
 
 
@@ -18,6 +19,7 @@ void CQueue::pop()
 	CQNode *p = head;
 	head = head->next;
 	delete(p);
+	cnt--;
 }
 
 bool CQueue::empty()
@@ -31,10 +33,12 @@ void CQueue::push(CAirplane &a)
 	if(empty())
 	{
 		head = tail = p;
+		cnt++;
 		return;
 	}
 	tail->next = p;
 	tail=tail->next;
+	cnt++;
 	return;
 }
 
@@ -51,6 +55,7 @@ void CQueue::scan(int alert, CQueue &q)
 	{
 		CAirplane plane = p->data;
 		plane.fuel -= DFUEL;
+
 		if(plane.fuel <= alert)
 		{
 			q.push(plane);
@@ -68,6 +73,7 @@ void CQueue::scan(int alert, CQueue &q)
 				p_pre->next = p->next;
 			}
 
+			cnt--;
 			delete(p);
 		}
 
@@ -76,3 +82,7 @@ void CQueue::scan(int alert, CQueue &q)
 	return;
 }
 
+int CQueue::size()
+{
+	return cnt;
+}

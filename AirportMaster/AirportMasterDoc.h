@@ -22,11 +22,20 @@ public:
 	ifstream fin;
 	int now_time;
 	CAirplane next_plane;
+
+	CString output_buffer;
 // ²Ù×÷
 public:
 	void ArrangeLanes();
 	bool ReadNext(CAirplane &target);
 	bool NextStep();
+
+	CString GetNowTime();
+	CQueue GetQueue(int type);
+	int GetQSize(int type);
+	bool LaneEmpty(int num);
+
+	CString GetOutput();
 
 // ÖØÐ´
 public:

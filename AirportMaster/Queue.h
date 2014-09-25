@@ -4,8 +4,9 @@
 
 class CQueue
 {
-protected:
+public:
 	CQNode *head, *tail;
+	int cnt;
 public:
 	CQueue(void);
 	~CQueue(void);
@@ -15,5 +16,6 @@ public:
 	CAirplane front();
 	void scan(int alert, CQueue &q);
 	bool empty();
+	int size();
 };
 

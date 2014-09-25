@@ -245,6 +245,8 @@ bool CAirportMasterDoc::NextStep()
 	{
 		if(now_time == lane[i].leave_time)
 		{
+			string plane_name = lane[i].now_plane.id;
+			output_buffer.AppendFormat("%s∫≈∫Ω∞‡¿Îø™¡À≈‹µ¿\n", plane_name);
 			lane[i].clear();
 		}
 	}
@@ -282,4 +284,50 @@ bool CAirportMasterDoc::NextStep()
 	}
 
 	return true;
+}
+
+CString TimeToString(int t)
+{
+	CString ret;
+	int hour = t / 60;
+	int min = t%60;
+
+	ret.Format("%02d:%02d", hour, min);
+	return ret;
+}
+
+CString CAirportMasterDoc::GetNowTime()
+{
+	return TimeToString(now_time);
+}
+
+CQueue CAirportMasterDoc::GetQueue(int type)
+{
+	if(type == LAND)
+		return land_q;
+	else if(type == EMERGENCY)
+		return emergency_q;
+	else
+		return take_off_q;
+	
+}
+
+int CAirportMasterDoc::GetQSize(int type)
+{
+	if(type == LAND)
+		return land_q.size();
+	else if(type == EMERGENCY)
+		return emergency_q.size();
+	else
+		return take_off_q.size();
+}
+
+bool CAirportMasterDoc::LaneEmpty(int num)
+{
+	return lane[num].empty();
+}
+
+CString CAirportMasterDoc::GetOutput()
+{
+	return output_buffer;
 }
