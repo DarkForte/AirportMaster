@@ -226,7 +226,8 @@ void CAirportMasterView::OnInitialUpdate()
 
 	// TODO: 在此添加专用代码和/或调用基类
 	p_edit = new CEdit();
-	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY, CRect(12, 541, 524, 771), this, WM_USER+100);
+	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY | ES_MULTILINE, 
+		CRect(12, 541, 524, 771), this, WM_USER+100);
 	p_edit->ShowWindow(SW_SHOW);
 	CFont font;
 	font.CreateFont(22, // nHeight 
@@ -242,7 +243,7 @@ void CAirportMasterView::OnInitialUpdate()
 		CLIP_DEFAULT_PRECIS, // nClipPrecision 
 		DEFAULT_QUALITY, // nQuality 
 		DEFAULT_PITCH | FF_SWISS, // nPitchAndFamily 
-		_T("Arial")); // lpszFac 
+		_T("微软雅黑")); // lpszFac 
 
 	p_edit->SetFont(&font);
 }

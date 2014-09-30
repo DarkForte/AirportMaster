@@ -246,7 +246,10 @@ bool CAirportMasterDoc::NextStep()
 		if(now_time == lane[i].leave_time)
 		{
 			string plane_name = lane[i].now_plane.id;
-			output_buffer.AppendFormat("%s号航班离开了跑道\n", plane_name);
+			char tmp[50];
+			sprintf_s(tmp, "%s号航班离开了跑道", plane_name.c_str());
+			output_buffer += tmp + CString("\r\n");
+			//output_buffer.AppendFormat("%s号航班离开了跑道\n", plane_name);
 			lane[i].clear();
 		}
 	}
