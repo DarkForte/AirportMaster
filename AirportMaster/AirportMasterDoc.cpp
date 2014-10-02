@@ -141,6 +141,34 @@ void CAirportMasterDoc::Dump(CDumpContext& dc) const
 #endif //_DEBUG
 
 // CAirportMasterDoc 命令
+
+void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event_type)
+{
+	char tmp[50];
+	const char *plane_name_c = plane_name.c_str();
+	if(event_type == OFF_LANE)
+	{
+		sprintf_s(tmp, "%s号航班离开了跑道", plane_name_c);
+	}
+	else if(event_type == TURN_EMERGENCY)
+	{
+		sprintf_s(tmp, "%s号航班燃油不足，准备紧急降落", plane_name_c);
+	}
+	else if(event_type == NEW_LAND)
+	{
+		sprintf_s(tmp, "%s号航班加入了降落队列", plane_name_c);
+	}
+	else if(event_type == NEW_OFF)
+	{
+		sprintf_s(tmp, "%s号航班加入了起飞队列", plane_name_c);
+	}
+	else if(event_type == ASSIGN)
+	{
+		sprintf_s(tmp, "%s号航班获准进入%d号跑道", plane_name_c, lane_num);
+	}
+	output_buffer += tmp + CString("\r\n");
+}
+
 void CAirportMasterDoc::ArrangeLanes()
 {
 	//Emergency
@@ -155,6 +183,7 @@ void CAirportMasterDoc::ArrangeLanes()
 			if(lane[i].empty())
 			{
 				lane[i].assign(now_plane, now_time + LANE_TIME);
+				AppendMessage(now_plane.id, i, ASSIGN);
 				break;
 			}
 		}
@@ -167,6 +196,7 @@ void CAirportMasterDoc::ArrangeLanes()
 		CAirplane plane_off = take_off_q.front();
 		take_off_q.pop();
 		lane[3].assign(plane_off, now_time + LANE_TIME);
+		AppendMessage(plane_off.id, 3, ASSIGN);
 	}
 
 	i=2;
@@ -187,12 +217,14 @@ void CAirportMasterDoc::ArrangeLanes()
 		if(plane_go.time < plane_land.time)
 		{
 			lane[i] .assign( plane_go, now_time + LANE_TIME);
+			AppendMessage(plane_go.id, i, ASSIGN);
 			take_off_q.pop();
 			i--;
 		}
 		else
 		{
 			lane[i] .assign( plane_land, now_time + LANE_TIME);
+			AppendMessage(plane_land.id, i, ASSIGN);
 			land_q.pop();
 			i--;
 		}
@@ -200,7 +232,7 @@ void CAirportMasterDoc::ArrangeLanes()
 	return;
 }
 
-int StringToTime(string input)
+int CAirportMasterDoc::StringToTime(string input)
 {
 	int hour = 10*(input[0]-'0') + (input[1] - '0');
 	int min = 10*(input[3]-'0') + (input[4]- '0');
@@ -222,7 +254,7 @@ bool CAirportMasterDoc::ReadNext(CAirplane &target)
 	if(go_time.length() < 5)//"00:00,"
 	{
 		target.arrive = true;
-		target.fuel = rand() % (100-10) + 10; 
+		target.fuel = rand() % (20-10) + 10; 
 	}
 	else
 	{
@@ -246,13 +278,17 @@ bool CAirportMasterDoc::NextStep()
 		if(now_time == lane[i].leave_time)
 		{
 			string plane_name = lane[i].now_plane.id;
-			char tmp[50];
-			sprintf_s(tmp, "%s号航班离开了跑道", plane_name.c_str());
-			output_buffer += tmp + CString("\r\n");
-			//output_buffer.AppendFormat("%s号航班离开了跑道\n", plane_name);
 			lane[i].clear();
+			AppendMessage(plane_name, i, OFF_LANE);
 		}
 	}
+
+	//drop fuel
+	string list[50];
+	int p_list = 0;
+	land_q.scan(ALERT, emergency_q, list, p_list);
+	for(i=1; i<=p_list; i++)
+		AppendMessage(list[i], 0, TURN_EMERGENCY);
 
 	//arrange lanes
 	ArrangeLanes();
@@ -263,10 +299,12 @@ bool CAirportMasterDoc::NextStep()
 		if(next_plane.arrive == true)
 		{
 			land_q.push(next_plane);
+			AppendMessage(next_plane.id, 0, NEW_LAND);
 		}
 		else
 		{
 			take_off_q.push(next_plane);
+			AppendMessage(next_plane.id, 0, NEW_OFF);
 		}
 
 		bool ok = ReadNext(next_plane);
@@ -286,10 +324,14 @@ bool CAirportMasterDoc::NextStep()
 		}
 	}
 
+	land_q.Fill(plane_in_q[LAND]);
+	emergency_q.Fill(plane_in_q[EMERGENCY]);
+	take_off_q.Fill(plane_in_q[OFF]);
+
 	return true;
 }
 
-CString TimeToString(int t)
+CString CAirportMasterDoc::TimeToString(int t)
 {
 	CString ret;
 	int hour = t / 60;
@@ -333,4 +375,19 @@ bool CAirportMasterDoc::LaneEmpty(int num)
 CString CAirportMasterDoc::GetOutput()
 {
 	return output_buffer;
+}
+
+void CAirportMasterDoc::ClearOutput()
+{
+	output_buffer.Empty();
+}
+
+CAirplane CAirportMasterDoc::GetPointPlane(int type, int num)
+{
+	return plane_in_q[type][num];
+}
+
+CAirplane CAirportMasterDoc::GetLanePlane(int num)
+{
+	return lane[num].now_plane;
 }

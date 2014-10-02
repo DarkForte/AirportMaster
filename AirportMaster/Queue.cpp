@@ -3,6 +3,9 @@
 #include "QNode.h"
 #include "Airplane.h"
 
+#include <string>
+using namespace std;
+
 CQueue::CQueue(void)
 {
 	head = tail = NULL;
@@ -47,7 +50,7 @@ CAirplane CQueue::front()
 	return head->data;
 }
 
-void CQueue::scan(int alert, CQueue &q)
+void CQueue::scan(int alert, CQueue &q, string list[], int &p_list)
 {
 	CQNode *p;
 	CQNode *p_pre=NULL;
@@ -58,6 +61,8 @@ void CQueue::scan(int alert, CQueue &q)
 
 		if(plane.fuel <= alert)
 		{
+			list[++p_list] = plane.id;
+
 			q.push(plane);
 
 			if(p == head)//第一个元素就要删除
@@ -85,4 +90,19 @@ void CQueue::scan(int alert, CQueue &q)
 int CQueue::size()
 {
 	return cnt;
+}
+
+void CQueue::Fill(CAirplane list[])
+{
+	if(empty())
+		return;
+	int p_list=0;
+	CQNode* p = head;
+	while(p != tail)
+	{
+		list[++p_list] = p->data;
+		p = p->next;
+	}
+	list[++p_list] = p->data;
+	return;
 }

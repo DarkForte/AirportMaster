@@ -20,7 +20,16 @@ public:
 	CImage basic_ui;
 	CImage plane_icon;
 
+	CRect m_client;
+	CDC m_cacheDC;   //缓冲DC  
+	CBitmap m_cacheCBitmap;//缓冲位图  
+
 	CEdit *p_edit;
+
+	CFont font_edit;
+
+	bool pointing;
+	CAirplane point_plane;
 
 // 操作
 public:
@@ -50,6 +59,7 @@ protected:
 public:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual void OnInitialUpdate();
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
 #ifndef _DEBUG  // AirportMasterView.cpp 中的调试版本

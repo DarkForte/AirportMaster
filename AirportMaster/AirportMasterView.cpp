@@ -26,6 +26,7 @@ const CPoint GREEN_BUTTON_COD(856, 553);
 const CPoint YELLOW_BUTTON_COD(856, 623);
 const CPoint RED_BUTTON_COD(856, 700);
 const CPoint TIME_COD(1092, 712);
+
 const CPoint LAND_COD(690, 72);
 const CPoint EMERGENCY_COD(690, 235);
 const CPoint OFF_COD(690, 410);
@@ -33,6 +34,11 @@ const CPoint LANE_COD[] = { CPoint(0,0), CPoint(1068, 68), CPoint(1068, 203), CP
 const int PLANE_INTERVAL = 10;
 
 int plane_width, plane_height;
+CRect land_rect[10], emergency_rect[10], off_rect[10];
+CRect lane_rect[5];
+
+const int INFO_H = 20;
+const CPoint INFO_COD(550,550);
 
 // CAirportMasterView
 
@@ -42,6 +48,7 @@ BEGIN_MESSAGE_MAP(CAirportMasterView, CView)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 // CAirportMasterView 构造/析构
@@ -60,21 +67,60 @@ void TransparentPNG(CImage *png)
 	}
 }
 
+int calc_x(int origin_x, int i)
+{
+	return origin_x - plane_width * (i-1) - PLANE_INTERVAL * i;
+}
+
 CAirportMasterView::CAirportMasterView()
 {
 	// TODO: 在此处添加构造代码
 	basic_ui.Load("pic\\basic_ui.png");
+	TransparentPNG(&basic_ui);
 	next_icon.Load("pic\\next_icon.png");
-	
-	green_button.Load("pic\\green_button.png");
-	yellow_button.Load("pic\\yellow_button.png");
-	red_button.Load("pic\\red_button.png");
-	plane_icon.Load("pic\\plane.png");
+	TransparentPNG(&next_icon);
 
+	green_button.Load("pic\\green_button.png");
+	TransparentPNG(&green_button);
+
+	yellow_button.Load("pic\\yellow_button.png");
+	TransparentPNG(&yellow_button);
+
+	red_button.Load("pic\\red_button.png");
+	TransparentPNG(&red_button);
+
+	plane_icon.Load("pic\\plane.png");
 	TransparentPNG(&plane_icon);
+
 	plane_width = plane_icon.GetWidth();
 	plane_height = plane_icon.GetHeight();
 
+	//////////////////////////////////////////////////////////////////////////make rects
+	int i;
+	for(i=1; calc_x(LAND_COD.x, i) >=0; i++)
+	{
+		int x = calc_x(LAND_COD.x, i);
+		land_rect[i].SetRect(x, LAND_COD.y, x + plane_width, LAND_COD.y + plane_height);
+	}
+
+	for(i=1; calc_x(EMERGENCY_COD.x, i)>=0; i++)
+	{
+		int x = calc_x(EMERGENCY_COD.x, i);
+		emergency_rect[i].SetRect(x, EMERGENCY_COD.y, x+plane_width, EMERGENCY_COD.y + plane_height);
+	}
+
+	for(i=1; calc_x(OFF_COD.x, i) >=0; i++)
+	{
+		int x = calc_x(OFF_COD.x , i);
+		off_rect[i].SetRect(x, OFF_COD.y, x + plane_width, OFF_COD.y + plane_height);
+	}
+
+	for(i=1; i<=3; i++)
+	{
+		lane_rect[i].SetRect(LANE_COD[i].x , LANE_COD[i].y, LANE_COD[i].x + plane_width, LANE_COD[i].y + plane_height);
+	}
+
+	pointing = false;
 }
 
 CAirportMasterView::~CAirportMasterView()
@@ -91,11 +137,6 @@ BOOL CAirportMasterView::PreCreateWindow(CREATESTRUCT& cs)
 
 // CAirportMasterView 绘制
 
-int calc_x(int origin_x, int i)
-{
-	return origin_x - plane_width * (i-1) - PLANE_INTERVAL * i;
-}
-
 void CAirportMasterView::OnDraw(CDC* pDC)
 {
 	CAirportMasterDoc* pDoc = GetDocument();
@@ -104,42 +145,48 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 		return;
 
 	// TODO: 在此处为本机数据添加绘制代码
+	//创建缓冲DC
+	GetClientRect(&m_client);
+	m_cacheDC.CreateCompatibleDC(NULL);
+	m_cacheCBitmap.CreateCompatibleBitmap(pDC, m_client.Width(),m_client.Height());
+	m_cacheDC.SelectObject(&m_cacheCBitmap);
 
 	///////////////////////////////////////////////////////////////////////draw UI
-	basic_ui.Draw(pDC->m_hDC, 0,0);
-	green_button.Draw(pDC->m_hDC, GREEN_BUTTON_COD);
-	yellow_button.Draw(pDC->m_hDC, YELLOW_BUTTON_COD);
-	red_button.Draw(pDC->m_hDC, RED_BUTTON_COD);
-	next_icon.Draw(pDC->m_hDC, NEXT_ICON_COD);
+	m_cacheDC.FillSolidRect(0,0,m_client.Width(), m_client.Height(), RGB(255,255,255));
+	basic_ui.Draw(m_cacheDC, 0,0);
+	green_button.Draw(m_cacheDC, GREEN_BUTTON_COD);
+	yellow_button.Draw(m_cacheDC, YELLOW_BUTTON_COD);
+	red_button.Draw(m_cacheDC, RED_BUTTON_COD);
+	next_icon.Draw(m_cacheDC, NEXT_ICON_COD);
 
 	CFont font;
-	font.CreatePointFont(120,"微软雅黑", pDC);
-	pDC->SelectObject(font);
+	font.CreatePointFont(120,"微软雅黑", &m_cacheDC);
+	m_cacheDC.SelectObject(font);
 
 	CString buffer("现在时刻：");
 	CString now_time = pDoc->GetNowTime();
 	buffer = buffer + now_time;
-	pDC->TextOut(TIME_COD.x, TIME_COD.y, buffer);
+	m_cacheDC.TextOut(TIME_COD.x, TIME_COD.y, buffer);
 
 	////////////////////////////////////////////////////////////draw queues
 
 	int now_size = pDoc->GetQSize(LAND);
 	int i;
-	for(i=1; i<=now_size && calc_x(LAND_COD.x, i) >=0; i++)
+	for(i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(pDC->m_hDC, calc_x(LAND_COD.x, i), LAND_COD.y);
+		plane_icon.Draw(m_cacheDC, land_rect[i].TopLeft());
 	}
 
 	now_size = pDoc->GetQSize(EMERGENCY);
-	for(i=1; i<=now_size && calc_x(EMERGENCY_COD.x, i)>=0; i++)
+	for(i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(pDC->m_hDC, calc_x(EMERGENCY_COD.x, i), EMERGENCY_COD.y);
+		plane_icon.Draw(m_cacheDC, emergency_rect[i].TopLeft());
 	}
 
 	now_size = pDoc->GetQSize(OFF);
-	for (i=1; i<=now_size && calc_x(OFF_COD.x, i) >=0; i++)
+	for (i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(pDC->m_hDC, calc_x(OFF_COD.x, i) , OFF_COD.y);
+		plane_icon.Draw(m_cacheDC, off_rect[i].TopLeft());
 	}
 
 	////////////////////////////////////////////////////////////draw lanes
@@ -147,10 +194,48 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	{
 		if(pDoc->LaneEmpty(i) == false)
 		{
-			plane_icon.Draw(pDC->m_hDC, LANE_COD[i]);
+			plane_icon.Draw(m_cacheDC, lane_rect[i].TopLeft());
 		}
 	}
-	
+	////////////////////////////////////////////////////////////////////////// show info
+
+	CString buf;
+	if(pointing)
+	{
+		CString plane_id = point_plane.id.c_str();
+		buf = plane_id + "号航班";
+		m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y, buf);
+
+		buf = "进入队列时间：";
+		buf += pDoc->TimeToString(point_plane.time);
+		m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + INFO_H, buf);
+
+		if(point_plane.arrive == false)
+		{
+			buf = "预计起飞时间：";
+			buf += pDoc->TimeToString(point_plane.time + LANE_TIME);
+			m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + 2*INFO_H, buf);
+		}
+		else
+		{
+			buf = "预计降落时间：";
+			buf += pDoc->TimeToString(point_plane.time + LANE_TIME);
+			m_cacheDC.TextOut(INFO_COD.x , INFO_COD.y + 2*INFO_H, buf);
+			
+			buf.Format( "剩余油量：%d", point_plane.fuel);
+			m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + 3*INFO_H, buf);
+		}
+	}
+	else
+	{
+		m_cacheDC.FillSolidRect(INFO_COD.x, INFO_COD.y, 200, 200, RGB(255,255,255));
+	}
+
+	pDC->BitBlt(0, 0, m_client.Width(), m_client.Height(), &m_cacheDC,0,0,SRCCOPY);  
+
+	ValidateRect(m_client);
+	m_cacheCBitmap.DeleteObject();
+	m_cacheDC.DeleteDC();
 }
 
 void CAirportMasterView::OnRButtonUp(UINT /* nFlags */, CPoint point)
@@ -206,14 +291,13 @@ void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			CString output = pDoc->GetOutput();
 			p_edit->SetWindowText(output);
+			pDoc->ClearOutput();
 
 			CDC* pdc = GetDC();
 			OnDraw(pdc);
 			pdc->DeleteDC();
 		}
 	}
-
-	
 
 	CView::OnLButtonDown(nFlags, point);
 	return;
@@ -229,13 +313,13 @@ void CAirportMasterView::OnInitialUpdate()
 	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY | ES_MULTILINE, 
 		CRect(12, 541, 524, 771), this, WM_USER+100);
 	p_edit->ShowWindow(SW_SHOW);
-	CFont font;
-	font.CreateFont(22, // nHeight 
+	
+	font_edit.CreateFont(22, // nHeight 
 		0, // nWidth 
 		0, // nEscapement 
 		0, // nOrientation 
-		FW_BOLD, // nWeight 
-		TRUE, // bItalic 
+		FW_NORMAL, // nWeight 
+		FALSE, // bItalic 
 		FALSE, // bUnderline 
 		0, // cStrikeOut 
 		DEFAULT_CHARSET, // nCharSet 
@@ -245,5 +329,73 @@ void CAirportMasterView::OnInitialUpdate()
 		DEFAULT_PITCH | FF_SWISS, // nPitchAndFamily 
 		_T("微软雅黑")); // lpszFac 
 
-	p_edit->SetFont(&font);
+	p_edit->SetFont(&font_edit);
+}
+
+
+void CAirportMasterView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	pointing = false;
+	CAirportMasterDoc *pDoc = GetDocument();
+
+	//////////////////////////////////////////////////////////////////////////queues
+	int i;
+	int now_size = pDoc->GetQSize(LAND);
+	for(i=1; i<=now_size;i++)
+	{
+		if( land_rect[i].PtInRect(point) )
+		{
+			pointing = true;
+			point_plane = pDoc->GetPointPlane(LAND, i);
+			break;
+		}
+	}
+
+	if(!pointing)
+	{
+		int now_size = pDoc->GetQSize(EMERGENCY);
+		for(i=1; i<=now_size;i++)
+		{
+			if( emergency_rect[i].PtInRect(point) )
+			{
+				pointing = true;
+				point_plane = pDoc->GetPointPlane(EMERGENCY, i);
+				break;
+			}
+		}
+	}
+
+	if(!pointing)
+	{
+		int now_size = pDoc->GetQSize(OFF);
+		for(i=1; i<=now_size;i++)
+		{
+			if( off_rect[i].PtInRect(point) )
+			{
+				pointing = true;
+				point_plane = pDoc->GetPointPlane(OFF, i);
+				break;
+			}
+		}
+	}
+
+	if(!pointing)
+	{
+		for(i=1; i<=3; i++)
+		{
+			if(lane_rect[i].PtInRect(point) && !pDoc->LaneEmpty(i))
+			{
+				pointing = true;
+				point_plane = pDoc->GetLanePlane(i);
+			}
+		}
+	}
+
+	if(pointing)
+	{
+		CDC *pDC = GetDC();
+		OnDraw(pDC);
+	}
+	CView::OnMouseMove(nFlags, point);
 }

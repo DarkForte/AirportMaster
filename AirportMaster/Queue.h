@@ -1,6 +1,8 @@
 #pragma once
 #include "Airplane.h"
 #include "QNode.h"
+#include <string>
+using namespace std;
 
 class CQueue
 {
@@ -14,8 +16,10 @@ public:
 	void pop();
 	void push(CAirplane &a);
 	CAirplane front();
-	void scan(int alert, CQueue &q);
+	void scan(int alert, CQueue &q, string list[], int &p_list);
 	bool empty();
 	int size();
+
+	void Fill(CAirplane list[]);
 };
 
