@@ -396,6 +396,7 @@ void CAirportMasterView::OnMouseMove(UINT nFlags, CPoint point)
 	{
 		CDC *pDC = GetDC();
 		OnDraw(pDC);
+		pDC->DeleteDC();
 	}
 	CView::OnMouseMove(nFlags, point);
 }

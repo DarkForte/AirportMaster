@@ -52,13 +52,13 @@ CAirplane CQueue::front()
 
 void CQueue::scan(int alert, CQueue &q, string list[], int &p_list)
 {
-	CQNode *p;
+	CQNode *p = head;
 	CQNode *p_pre=NULL;
-	for(p = head; p!=NULL; p=p->next)
+	while(p!=NULL)
 	{
+		p->data.fuel -= DFUEL;
 		CAirplane plane = p->data;
-		plane.fuel -= DFUEL;
-
+		
 		if(plane.fuel <= alert)
 		{
 			list[++p_list] = plane.id;
@@ -68,21 +68,29 @@ void CQueue::scan(int alert, CQueue &q, string list[], int &p_list)
 			if(p == head)//第一个元素就要删除
 			{
 				head = head->next;
+				delete(p);
+				p = head;
 			}
 			else if(p == tail)//队尾指针得移动
 			{
+				p_pre->next = NULL;
 				tail = p_pre;
+				delete(p);
+				p=NULL;
 			}
 			else
 			{
 				p_pre->next = p->next;
+				delete(p);
+				p = p_pre->next;
 			}
-
 			cnt--;
-			delete(p);
 		}
-
-		p_pre = p;
+		else
+		{
+			p_pre = p;
+			p=p->next;
+		}
 	}
 	return;
 }
@@ -98,11 +106,10 @@ void CQueue::Fill(CAirplane list[])
 		return;
 	int p_list=0;
 	CQNode* p = head;
-	while(p != tail)
+	while(p != NULL)
 	{
 		list[++p_list] = p->data;
 		p = p->next;
 	}
-	list[++p_list] = p->data;
 	return;
 }

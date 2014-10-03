@@ -172,21 +172,24 @@ void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event
 void CAirportMasterDoc::ArrangeLanes()
 {
 	//Emergency
-	int i;
+	int i=3;
 	while(emergency_q.empty() == false)
 	{
 		CAirplane now_plane = emergency_q.front();
-		emergency_q.pop();
-
-		for(i=3;i>=1;i--)
+		while(i>=1)
 		{
 			if(lane[i].empty())
 			{
+				emergency_q.pop();
 				lane[i].assign(now_plane, now_time + LANE_TIME);
 				AppendMessage(now_plane.id, i, ASSIGN);
 				break;
 			}
+			else
+				i--;
 		}
+		if(i==0)
+			break;
 
 	}
 
@@ -202,6 +205,11 @@ void CAirportMasterDoc::ArrangeLanes()
 	i=2;
 	while( i>=1 && !(take_off_q.empty() && land_q.empty() ) )
 	{
+		while(!lane[i].empty() && i>=1)
+			i--;
+		if(i<1)
+			break;
+
 		CAirplane plane_land;
 		CAirplane plane_go;
 		if(land_q.empty() == false)

@@ -22,7 +22,7 @@ public:
 	ifstream fin;
 	int now_time;
 	CAirplane next_plane;
-	CAirplane plane_in_q[5][10];
+	CAirplane plane_in_q[5][30];
 
 	CString output_buffer;
 // ²Ù×÷
