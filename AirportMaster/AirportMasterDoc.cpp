@@ -142,9 +142,9 @@ void CAirportMasterDoc::Dump(CDumpContext& dc) const
 
 // CAirportMasterDoc 命令
 
-void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event_type)
+void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event_type, int pos, int fuel)
 {
-	char tmp[50];
+	char tmp[200];
 	const char *plane_name_c = plane_name.c_str();
 	if(event_type == OFF_LANE)
 	{
@@ -169,6 +169,8 @@ void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event
 	else if(event_type == GO_AWAY)
 	{
 		sprintf_s(tmp, "由于前方降落飞机过多，%s号航班已被转移至邻近机场降落。", plane_name_c);
+		output_buffer += tmp + CString("\r\n");
+		sprintf_s(tmp, "当时它处于紧急队伍第%d位，还剩%d的油量。", pos, fuel);
 	}
 	output_buffer += tmp + CString("\r\n");
 }
@@ -311,9 +313,9 @@ bool CAirportMasterDoc::NextStep()
 	land_q.scan(ALERT, list, p_list);
 	for(i=1; i<=p_list; i++)
 	{
-		if( NeedTransport(list[i].fuel, emergency_q.size()) )
+		if( NeedTransport(list[i].fuel, max( emergency_q.size()-3, 0 ) ) ) //这一步会有3个降落
 		{
-			AppendMessage(list[i].id, 0, GO_AWAY);
+			AppendMessage(list[i].id, 0, GO_AWAY, max(emergency_q.size()-3,0)+1, list[i].fuel);
 		}
 		else
 		{

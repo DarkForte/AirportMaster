@@ -22,9 +22,17 @@ using namespace std;
 #endif
 
 const CPoint NEXT_ICON_COD(1111,557);
+CRect next_icon_rect;
+
 const CPoint GREEN_BUTTON_COD(856, 553);
+CRect green_icon_rect;
+
 const CPoint YELLOW_BUTTON_COD(856, 623);
+CRect yellow_icon_rect;
+
 const CPoint RED_BUTTON_COD(856, 700);
+CRect red_icon_rect;
+
 const CPoint TIME_COD(1092, 712);
 
 const CPoint LAND_COD(690, 72);
@@ -126,6 +134,18 @@ CAirportMasterView::CAirportMasterView()
 		lane_rect[i].SetRect(LANE_COD[i].x , LANE_COD[i].y, LANE_COD[i].x + plane_width, LANE_COD[i].y + plane_height);
 	}
 
+	next_icon_rect.SetRect(NEXT_ICON_COD.x, NEXT_ICON_COD.y, 
+		NEXT_ICON_COD.x + next_icon.GetWidth(), NEXT_ICON_COD.y + next_icon.GetHeight() );
+
+	green_icon_rect.SetRect(GREEN_BUTTON_COD.x, GREEN_BUTTON_COD.y, 
+		GREEN_BUTTON_COD.x + green_button.GetWidth(), GREEN_BUTTON_COD.y + green_button.GetHeight() );
+
+	yellow_icon_rect.SetRect(YELLOW_BUTTON_COD.x, YELLOW_BUTTON_COD.y, 
+		YELLOW_BUTTON_COD.x + yellow_button.GetWidth(), YELLOW_BUTTON_COD.y + yellow_button.GetHeight() );
+
+	red_icon_rect.SetRect(RED_BUTTON_COD.x, RED_BUTTON_COD.y, 
+		RED_BUTTON_COD.x + red_button.GetWidth(), RED_BUTTON_COD.y + red_button.GetHeight() );
+
 	pointing = false;
 }
 
@@ -173,8 +193,6 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	CString now_time = pDoc->GetNowTime();
 	buffer = buffer + now_time;
 	m_cacheDC.TextOut(TIME_COD.x, TIME_COD.y, buffer);
-
-	
 
 	////////////////////////////////////////////////////////////draw queues
 
@@ -287,8 +305,7 @@ void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	CAirportMasterDoc *pDoc = GetDocument();
 
-	if(NEXT_ICON_COD.x <= point.x && point.x<= NEXT_ICON_COD.x + next_icon.GetWidth() 
-		&& NEXT_ICON_COD.y <= point.y && point.y <= NEXT_ICON_COD.y + next_icon.GetHeight() )
+	if( next_icon_rect.PtInRect(point) )
 	{
 		bool ok = pDoc->NextStep();
 		if(!ok)
@@ -302,7 +319,20 @@ void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 			CDC* pdc = GetDC();
 			OnDraw(pdc);
 			pdc->DeleteDC();
+			//Invalidate();
 		}
+	}
+	else if( green_icon_rect.PtInRect(point) )
+	{
+
+	}
+	else if( yellow_icon_rect.PtInRect(point) )
+	{
+
+	}
+	else if( red_icon_rect.PtInRect(point) )
+	{
+
 	}
 
 	CView::OnLButtonDown(nFlags, point);
@@ -316,7 +346,7 @@ void CAirportMasterView::OnInitialUpdate()
 
 	// TODO: 在此添加专用代码和/或调用基类
 	p_edit = new CEdit();
-	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY | ES_MULTILINE, 
+	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY | ES_MULTILINE | ES_AUTOVSCROLL, 
 		CRect(12, 541, 524, 771), this, WM_USER+100);
 	p_edit->ShowWindow(SW_SHOW);
 	

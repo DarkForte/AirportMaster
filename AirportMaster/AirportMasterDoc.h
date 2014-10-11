@@ -38,7 +38,8 @@ public:
 
 	static const int OFF_LANE = 1, TURN_EMERGENCY =2, NEW_LAND=3, NEW_OFF=4, 
 		ASSIGN=5, GO_AWAY = 6;
-	void AppendMessage(string plane_name, int lane_num, int event_type);
+	void AppendMessage(string plane_name, int lane_num, int event_type,
+		int pos = 0, int fuel = 0);
 	CString GetOutput();
 	void ClearOutput();
 
