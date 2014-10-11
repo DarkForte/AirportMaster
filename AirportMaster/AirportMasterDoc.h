@@ -36,7 +36,8 @@ public:
 	int GetQSize(int type);
 	bool LaneEmpty(int num);
 
-	static const int OFF_LANE = 1, TURN_EMERGENCY =2, NEW_LAND=3, NEW_OFF=4, ASSIGN=5;
+	static const int OFF_LANE = 1, TURN_EMERGENCY =2, NEW_LAND=3, NEW_OFF=4, 
+		ASSIGN=5, GO_AWAY = 6;
 	void AppendMessage(string plane_name, int lane_num, int event_type);
 	CString GetOutput();
 	void ClearOutput();
@@ -46,6 +47,7 @@ public:
 
 	static int StringToTime(string input);
 	static CString TimeToString(int t);
+	bool NeedTransport(int fuel, int size);
 
 // ÖØÐ´
 public:

@@ -174,6 +174,8 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	buffer = buffer + now_time;
 	m_cacheDC.TextOut(TIME_COD.x, TIME_COD.y, buffer);
 
+	
+
 	////////////////////////////////////////////////////////////draw queues
 
 	int now_size = pDoc->GetQSize(LAND);

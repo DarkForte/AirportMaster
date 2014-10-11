@@ -50,7 +50,7 @@ CAirplane CQueue::front()
 	return head->data;
 }
 
-void CQueue::scan(int alert, CQueue &q, string list[], int &p_list)
+void CQueue::scan(int alert, CAirplane list[], int &p_list)
 {
 	CQNode *p = head;
 	CQNode *p_pre=NULL;
@@ -61,9 +61,7 @@ void CQueue::scan(int alert, CQueue &q, string list[], int &p_list)
 		
 		if(plane.fuel <= alert)
 		{
-			list[++p_list] = plane.id;
-
-			q.push(plane);
+			list[++p_list] = plane;
 
 			if(p == head)//第一个元素就要删除
 			{

@@ -148,23 +148,27 @@ void CAirportMasterDoc::AppendMessage(string plane_name, int lane_num, int event
 	const char *plane_name_c = plane_name.c_str();
 	if(event_type == OFF_LANE)
 	{
-		sprintf_s(tmp, "%s号航班离开了跑道", plane_name_c);
+		sprintf_s(tmp, "%s号航班离开了跑道…", plane_name_c);
 	}
 	else if(event_type == TURN_EMERGENCY)
 	{
-		sprintf_s(tmp, "%s号航班燃油不足，准备紧急降落", plane_name_c);
+		sprintf_s(tmp, "%s号航班燃油不足，准备紧急降落！", plane_name_c);
 	}
 	else if(event_type == NEW_LAND)
 	{
-		sprintf_s(tmp, "%s号航班加入了降落队列", plane_name_c);
+		sprintf_s(tmp, "%s号航班在空中盘旋，等待降落。", plane_name_c);
 	}
 	else if(event_type == NEW_OFF)
 	{
-		sprintf_s(tmp, "%s号航班加入了起飞队列", plane_name_c);
+		sprintf_s(tmp, "%s号航班已做好准备，开始等待起飞。", plane_name_c);
 	}
 	else if(event_type == ASSIGN)
 	{
-		sprintf_s(tmp, "%s号航班获准进入%d号跑道", plane_name_c, lane_num);
+		sprintf_s(tmp, "%s号航班获准进入%d号跑道。", plane_name_c, lane_num);
+	}
+	else if(event_type == GO_AWAY)
+	{
+		sprintf_s(tmp, "由于前方降落飞机过多，%s号航班已被转移至邻近机场降落。", plane_name_c);
 	}
 	output_buffer += tmp + CString("\r\n");
 }
@@ -248,6 +252,14 @@ int CAirportMasterDoc::StringToTime(string input)
 	return hour * 60 + min;
 }
 
+bool CAirportMasterDoc::NeedTransport(int fuel, int size)
+{
+	int t = fuel/DFUEL;
+	if(size / 3 < t)
+		return false;
+	return true;
+}
+
 bool CAirportMasterDoc::ReadNext(CAirplane &target)
 {
 	string plane_name, go_time, arrive_time;
@@ -294,12 +306,21 @@ bool CAirportMasterDoc::NextStep()
 	}
 
 	//drop fuel
-	string list[50];
+	CAirplane list[50];
 	int p_list = 0;
-	land_q.scan(ALERT, emergency_q, list, p_list);
+	land_q.scan(ALERT, list, p_list);
 	for(i=1; i<=p_list; i++)
-		AppendMessage(list[i], 0, TURN_EMERGENCY);
-
+	{
+		if( NeedTransport(list[i].fuel, emergency_q.size()) )
+		{
+			AppendMessage(list[i].id, 0, GO_AWAY);
+		}
+		else
+		{
+			emergency_q.push(list[i]);
+			AppendMessage(list[i].id, 0, TURN_EMERGENCY);
+		}
+	}
 	//arrange lanes
 	ArrangeLanes();
 

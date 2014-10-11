@@ -16,7 +16,7 @@ public:
 	void pop();
 	void push(CAirplane &a);
 	CAirplane front();
-	void scan(int alert, CQueue &q, string list[], int &p_list);
+	void scan(int alert, CAirplane list[], int &p_list);
 	bool empty();
 	int size();
 
