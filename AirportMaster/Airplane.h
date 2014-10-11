@@ -9,6 +9,8 @@ public:
 	bool arrive;
 	int time;
 	int fuel;
+	int color_num;
+	static int now_color;
 public:
 	CAirplane(void);
 	~CAirplane(void);

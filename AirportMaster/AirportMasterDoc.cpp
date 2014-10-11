@@ -273,6 +273,8 @@ bool CAirportMasterDoc::ReadNext(CAirplane &target)
 	if(arrive_time.length() >= 5) //"00:00"
 		target.time = StringToTime(arrive_time);
 
+	target.color_num = CAirplane::now_color;
+	CAirplane::now_color = CAirplane::now_color % PLANE_ICON_NUM + 1;
 	return true;
 }
 

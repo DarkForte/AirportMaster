@@ -18,7 +18,7 @@ public:
 	CImage next_icon;
 	CImage green_button, yellow_button, red_button;
 	CImage basic_ui;
-	CImage plane_icon;
+	CImage plane_icon[10];
 
 	CRect m_client;
 	CDC m_cacheDC;   //ª∫≥ÂDC  

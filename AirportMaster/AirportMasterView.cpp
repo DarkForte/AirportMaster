@@ -37,7 +37,7 @@ int plane_width, plane_height;
 CRect land_rect[10], emergency_rect[10], off_rect[10];
 CRect lane_rect[5];
 
-const int INFO_H = 20;
+const int INFO_H = 40;
 const CPoint INFO_COD(550,550);
 
 // CAirportMasterView
@@ -89,14 +89,20 @@ CAirportMasterView::CAirportMasterView()
 	red_button.Load("pic\\red_button.png");
 	TransparentPNG(&red_button);
 
-	plane_icon.Load("pic\\plane.png");
-	TransparentPNG(&plane_icon);
+	int i;
+	for(i=1; i<=PLANE_ICON_NUM; i++)
+	{
+		CString pth;
+		pth.Format("pic\\plane%d.png", i);
+		plane_icon[i].Load(pth);
+		TransparentPNG(&plane_icon[i]);
+	}
 
-	plane_width = plane_icon.GetWidth();
-	plane_height = plane_icon.GetHeight();
+	plane_width = plane_icon[1].GetWidth();
+	plane_height = plane_icon[1].GetHeight();
 
 	//////////////////////////////////////////////////////////////////////////make rects
-	int i;
+	
 	for(i=1; calc_x(LAND_COD.x, i) >=0; i++)
 	{
 		int x = calc_x(LAND_COD.x, i);
@@ -174,19 +180,22 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	int i;
 	for(i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(m_cacheDC, land_rect[i].TopLeft());
+		int now_color = pDoc->GetPointPlane(LAND, i).color_num;
+		plane_icon[now_color].Draw(m_cacheDC, land_rect[i].TopLeft());
 	}
 
 	now_size = pDoc->GetQSize(EMERGENCY);
 	for(i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(m_cacheDC, emergency_rect[i].TopLeft());
+		int now_color = pDoc->GetPointPlane(EMERGENCY, i).color_num;
+		plane_icon[now_color].Draw(m_cacheDC, emergency_rect[i].TopLeft());
 	}
 
 	now_size = pDoc->GetQSize(OFF);
 	for (i=1; i<=min(now_size, MAX_QNUM); i++)
 	{
-		plane_icon.Draw(m_cacheDC, off_rect[i].TopLeft());
+		int now_color = pDoc->GetPointPlane(OFF, i).color_num;
+		plane_icon[now_color].Draw(m_cacheDC, off_rect[i].TopLeft());
 	}
 
 	////////////////////////////////////////////////////////////draw lanes
@@ -194,7 +203,8 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	{
 		if(pDoc->LaneEmpty(i) == false)
 		{
-			plane_icon.Draw(m_cacheDC, lane_rect[i].TopLeft());
+			int now_color = pDoc->GetLanePlane(i).color_num;
+			plane_icon[now_color].Draw(m_cacheDC, lane_rect[i].TopLeft());
 		}
 	}
 	////////////////////////////////////////////////////////////////////////// show info
@@ -210,18 +220,12 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 		buf += pDoc->TimeToString(point_plane.time);
 		m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + INFO_H, buf);
 
-		if(point_plane.arrive == false)
+		buf = "已经等待时间：";
+		buf += pDoc->TimeToString(pDoc->now_time - point_plane.time);
+		m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + 2*INFO_H, buf);
+
+		if(point_plane.arrive == true)
 		{
-			buf = "预计起飞时间：";
-			buf += pDoc->TimeToString(point_plane.time + LANE_TIME);
-			m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + 2*INFO_H, buf);
-		}
-		else
-		{
-			buf = "预计降落时间：";
-			buf += pDoc->TimeToString(point_plane.time + LANE_TIME);
-			m_cacheDC.TextOut(INFO_COD.x , INFO_COD.y + 2*INFO_H, buf);
-			
 			buf.Format( "剩余油量：%d", point_plane.fuel);
 			m_cacheDC.TextOut(INFO_COD.x, INFO_COD.y + 3*INFO_H, buf);
 		}

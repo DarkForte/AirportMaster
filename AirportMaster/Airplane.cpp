@@ -3,6 +3,7 @@
 #include <string.h>
 using namespace std;
 
+int CAirplane::now_color =1;
 
 CAirplane::CAirplane(void)
 {
