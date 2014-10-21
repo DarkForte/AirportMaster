@@ -40,3 +40,4 @@ const int LAND = 1, EMERGENCY = 2, OFF=3;
 const int ALERT = 10;
 const int MAX_QNUM = 6;
 const int PLANE_ICON_NUM = 5;
+const int FUEL_MAX = 20, FUEL_MIN = 10;

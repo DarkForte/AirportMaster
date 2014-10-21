@@ -48,6 +48,8 @@ CRect lane_rect[5];
 const int INFO_H = 40;
 const CPoint INFO_COD(550,550);
 
+int tmp_count=0;
+
 // CAirportMasterView
 
 IMPLEMENT_DYNCREATE(CAirportMasterView, CView)
@@ -299,6 +301,10 @@ CAirportMasterDoc* CAirportMasterView::GetDocument() const // 非调试版本是内联的
 
 // CAirportMasterView 消息处理程序
 
+void Refresh()
+{
+
+}
 
 void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 {
@@ -322,17 +328,38 @@ void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 			//Invalidate();
 		}
 	}
-	else if( green_icon_rect.PtInRect(point) )
+	else if( green_icon_rect.PtInRect(point) || yellow_icon_rect.PtInRect(point) || red_icon_rect.PtInRect(point))
 	{
+		tmp_count++;
+		char buf[60]={};
+		sprintf_s(buf, "TMP_%03d", tmp_count);
+		string id(buf);
 
-	}
-	else if( yellow_icon_rect.PtInRect(point) )
-	{
+		if(green_icon_rect.PtInRect(point))
+		{
+			CAirplane tmp(id, false, pDoc->now_time, 0 );
+			pDoc->NewOff(tmp);
+			pDoc->Refresh(OFF);
+		}
+		else if(yellow_icon_rect.PtInRect(point))
+		{
+			CAirplane tmp(id, true, pDoc->now_time, rand()%(FUEL_MAX - FUEL_MIN) + FUEL_MIN );
+			pDoc->NewLand(tmp);
+			pDoc->Refresh(LAND);
+		}
+		else if(red_icon_rect.PtInRect(point))
+		{
+			CAirplane tmp(id, true, pDoc->now_time, rand()%(FUEL_MIN - 1) + 1  );
+			pDoc->NewEmergency(tmp);
+			pDoc->Refresh(EMERGENCY);
+		}
 
-	}
-	else if( red_icon_rect.PtInRect(point) )
-	{
+		CString output = pDoc->GetOutput();
+		p_edit->SetWindowText(output);
 
+		CDC* pdc = GetDC();
+		OnDraw(pdc);
+		pdc->DeleteDC();
 	}
 
 	CView::OnLButtonDown(nFlags, point);
@@ -346,7 +373,8 @@ void CAirportMasterView::OnInitialUpdate()
 
 	// TODO: 在此添加专用代码和/或调用基类
 	p_edit = new CEdit();
-	p_edit->Create(WS_VISIBLE| ES_LEFT | ES_READONLY | ES_MULTILINE | ES_AUTOVSCROLL, 
+	p_edit->Create(WS_VISIBLE | WS_VSCROLL | ES_LEFT | ES_READONLY | 
+		ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN, 
 		CRect(12, 541, 524, 771), this, WM_USER+100);
 	p_edit->ShowWindow(SW_SHOW);
 	

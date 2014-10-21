@@ -50,13 +50,23 @@ CAirplane CQueue::front()
 	return head->data;
 }
 
+void CQueue::drop()
+{
+	CQNode *p=head;
+	while(p!=NULL)
+	{
+		p->data.fuel -= DFUEL;
+		p = p->next;
+	}
+	return;
+}
+
 void CQueue::scan(int alert, CAirplane list[], int &p_list)
 {
 	CQNode *p = head;
 	CQNode *p_pre=NULL;
 	while(p!=NULL)
 	{
-		p->data.fuel -= DFUEL;
 		CAirplane plane = p->data;
 		
 		if(plane.fuel <= alert)

@@ -17,6 +17,7 @@ public:
 	void push(CAirplane &a);
 	CAirplane front();
 	void scan(int alert, CAirplane list[], int &p_list);
+	void drop();
 	bool empty();
 	int size();
 

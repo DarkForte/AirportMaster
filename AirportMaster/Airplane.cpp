@@ -20,4 +20,6 @@ CAirplane::CAirplane(string _id, bool _a, int _t, int _f)
 		arrive = _a;
 		time = _t;
 		fuel = _f;
+		color_num = now_color;
+		now_color = now_color % PLANE_ICON_NUM +1;
 }

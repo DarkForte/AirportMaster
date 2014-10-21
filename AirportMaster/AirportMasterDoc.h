@@ -31,6 +31,10 @@ public:
 	bool ReadNext(CAirplane &target);
 	bool NextStep();
 
+	void NewLand(CAirplane &next_plane);
+	void NewOff(CAirplane &next_plane);
+	void NewEmergency(CAirplane &next_plane);
+
 	CString GetNowTime();
 	CQueue GetQueue(int type);
 	int GetQSize(int type);
@@ -49,6 +53,8 @@ public:
 	static int StringToTime(string input);
 	static CString TimeToString(int t);
 	bool NeedTransport(int fuel, int size);
+
+	void Refresh(int num);
 
 // ÖØÐ´
 public:

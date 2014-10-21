@@ -256,7 +256,7 @@ int CAirportMasterDoc::StringToTime(string input)
 
 bool CAirportMasterDoc::NeedTransport(int fuel, int size)
 {
-	int t = fuel/DFUEL;
+	int t = (fuel-1)/DFUEL +1;
 	if(size / 3 < t)
 		return false;
 	return true;
@@ -276,7 +276,7 @@ bool CAirportMasterDoc::ReadNext(CAirplane &target)
 	if(go_time.length() < 5)//"00:00,"
 	{
 		target.arrive = true;
-		target.fuel = rand() % (20-10) + 10; 
+		target.fuel = rand() % (FUEL_MAX - FUEL_MIN) + FUEL_MIN; 
 	}
 	else
 	{
@@ -290,6 +290,50 @@ bool CAirportMasterDoc::ReadNext(CAirplane &target)
 	target.color_num = CAirplane::now_color;
 	CAirplane::now_color = CAirplane::now_color % PLANE_ICON_NUM + 1;
 	return true;
+}
+
+void CAirportMasterDoc::NewLand(CAirplane &next_plane)
+{
+	land_q.push(next_plane);
+	AppendMessage(next_plane.id, 0, NEW_LAND);
+	return;
+}
+
+void CAirportMasterDoc::NewOff(CAirplane &next_plane)
+{
+	take_off_q.push(next_plane);
+	AppendMessage(next_plane.id, 0, NEW_OFF);
+	return;
+}
+
+void CAirportMasterDoc::NewEmergency(CAirplane &next_plane)
+{
+	if( NeedTransport(next_plane.fuel, emergency_q.size() ) ) 
+	{
+		AppendMessage(next_plane.id, 0, GO_AWAY, 
+			emergency_q.size()+1, next_plane.fuel);
+		return;
+	}
+	emergency_q.push(next_plane);
+	AppendMessage(next_plane.id, 0, TURN_EMERGENCY);
+	return;
+}
+
+void CAirportMasterDoc::Refresh(int num)
+{
+	if(num == LAND)
+	{
+		land_q.Fill(plane_in_q[LAND]);
+	}
+	else if(num == OFF)
+	{
+		take_off_q.Fill(plane_in_q[OFF]);
+	}
+	else if(num == EMERGENCY)
+	{
+		emergency_q.Fill(plane_in_q[EMERGENCY]);
+	}
+	return;
 }
 
 bool CAirportMasterDoc::NextStep()
@@ -307,37 +351,30 @@ bool CAirportMasterDoc::NextStep()
 		}
 	}
 
+	//arrange lanes
+	ArrangeLanes();
+
 	//drop fuel
+	land_q.drop();
+	emergency_q.drop();
 	CAirplane list[50];
 	int p_list = 0;
 	land_q.scan(ALERT, list, p_list);
 	for(i=1; i<=p_list; i++)
 	{
-		if( NeedTransport(list[i].fuel, max( emergency_q.size()-3, 0 ) ) ) //这一步会有3个降落
-		{
-			AppendMessage(list[i].id, 0, GO_AWAY, max(emergency_q.size()-3,0)+1, list[i].fuel);
-		}
-		else
-		{
-			emergency_q.push(list[i]);
-			AppendMessage(list[i].id, 0, TURN_EMERGENCY);
-		}
+			NewEmergency(list[i]);
 	}
-	//arrange lanes
-	ArrangeLanes();
 
 	//process new plane
 	while(next_plane.time == now_time)
 	{
 		if(next_plane.arrive == true)
 		{
-			land_q.push(next_plane);
-			AppendMessage(next_plane.id, 0, NEW_LAND);
+			NewLand(next_plane);
 		}
 		else
 		{
-			take_off_q.push(next_plane);
-			AppendMessage(next_plane.id, 0, NEW_OFF);
+			NewOff(next_plane);
 		}
 
 		bool ok = ReadNext(next_plane);
@@ -357,9 +394,9 @@ bool CAirportMasterDoc::NextStep()
 		}
 	}
 
-	land_q.Fill(plane_in_q[LAND]);
-	emergency_q.Fill(plane_in_q[EMERGENCY]);
-	take_off_q.Fill(plane_in_q[OFF]);
+	Refresh(LAND);
+	Refresh(OFF);
+	Refresh(EMERGENCY);
 
 	return true;
 }
