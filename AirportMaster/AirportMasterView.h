@@ -15,7 +15,7 @@ public:
 	CAirportMasterDoc* GetDocument() const;
 
 //±‰¡ø
-	CImage next_icon;
+	CImage next_icon, quick_icon, next_p_icon;
 	CImage green_button, yellow_button, red_button;
 	CImage basic_ui;
 	CImage plane_icon[10];

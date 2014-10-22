@@ -21,8 +21,14 @@ using namespace std;
 #define new DEBUG_NEW
 #endif
 
-const CPoint NEXT_ICON_COD(1111,557);
+const CPoint NEXT_ICON_COD(1069,578);
 CRect next_icon_rect;
+
+const CPoint QUICK_ICON_COD(1197, 562);
+CRect quick_icon_rect;
+
+const CPoint NEXT_P_ICON_COD(1199, 636);
+CRect  next_p_icon_rect;
 
 const CPoint GREEN_BUTTON_COD(856, 553);
 CRect green_icon_rect;
@@ -87,8 +93,13 @@ CAirportMasterView::CAirportMasterView()
 	// TODO: 在此处添加构造代码
 	basic_ui.Load("pic\\basic_ui.png");
 	TransparentPNG(&basic_ui);
+
 	next_icon.Load("pic\\next_icon.png");
 	TransparentPNG(&next_icon);
+	quick_icon.Load("pic\\quick_icon.png");
+	TransparentPNG(&quick_icon);
+	next_p_icon.Load("pic\\next_p_icon.png");
+	TransparentPNG(&next_p_icon);
 
 	green_button.Load("pic\\green_button.png");
 	TransparentPNG(&green_button);
@@ -139,6 +150,13 @@ CAirportMasterView::CAirportMasterView()
 	next_icon_rect.SetRect(NEXT_ICON_COD.x, NEXT_ICON_COD.y, 
 		NEXT_ICON_COD.x + next_icon.GetWidth(), NEXT_ICON_COD.y + next_icon.GetHeight() );
 
+	quick_icon_rect.SetRect(QUICK_ICON_COD.x, QUICK_ICON_COD.y, 
+		QUICK_ICON_COD.x + quick_icon.GetWidth(), QUICK_ICON_COD.y + quick_icon.GetHeight() );
+
+	next_p_icon_rect.SetRect(NEXT_P_ICON_COD.x, NEXT_P_ICON_COD.y, 
+		NEXT_P_ICON_COD.x + next_p_icon.GetWidth(), 
+		NEXT_P_ICON_COD.y + next_p_icon.GetHeight() );
+
 	green_icon_rect.SetRect(GREEN_BUTTON_COD.x, GREEN_BUTTON_COD.y, 
 		GREEN_BUTTON_COD.x + green_button.GetWidth(), GREEN_BUTTON_COD.y + green_button.GetHeight() );
 
@@ -186,6 +204,8 @@ void CAirportMasterView::OnDraw(CDC* pDC)
 	yellow_button.Draw(m_cacheDC, YELLOW_BUTTON_COD);
 	red_button.Draw(m_cacheDC, RED_BUTTON_COD);
 	next_icon.Draw(m_cacheDC, NEXT_ICON_COD);
+	quick_icon.Draw(m_cacheDC, QUICK_ICON_COD);
+	next_p_icon.Draw(m_cacheDC, NEXT_P_ICON_COD);
 
 	CFont font;
 	font.CreatePointFont(120,"微软雅黑", &m_cacheDC);
@@ -311,22 +331,57 @@ void CAirportMasterView::OnLButtonDown(UINT nFlags, CPoint point)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	CAirportMasterDoc *pDoc = GetDocument();
 
-	if( next_icon_rect.PtInRect(point) )
+	if( next_icon_rect.PtInRect(point) || quick_icon_rect.PtInRect(point) || next_p_icon_rect.PtInRect(point))
 	{
-		bool ok = pDoc->NextStep();
-		if(!ok)
-			MessageBox("文件已经处理完毕了……");
-		else
+		if(next_icon_rect.PtInRect(point))
 		{
+			bool ok = pDoc->NextStep();
+			if(!ok)
+				MessageBox("文件已经处理完毕了……");
+
 			CString output = pDoc->GetOutput();
 			p_edit->SetWindowText(output);
 			pDoc->ClearOutput();
 
-			CDC* pdc = GetDC();
-			OnDraw(pdc);
-			pdc->DeleteDC();
-			//Invalidate();
 		}
+		
+		else if(quick_icon_rect.PtInRect(point))
+		{
+			int i;
+			for(i=1; i<=QUICK_STEPS; i++)
+			{
+				bool ok = pDoc->NextStep();
+				if(!ok)
+				{
+					MessageBox("文件已经处理完毕了……");
+					break;
+				}
+			}
+			CString output = pDoc->GetOutput();
+			p_edit->SetWindowText(output);
+			pDoc->ClearOutput();
+		}
+
+		else if(next_p_icon_rect.PtInRect(point))
+		{
+			int target_time = pDoc->next_plane.time;
+			while(pDoc->now_time < target_time)
+			{
+				bool ok = pDoc->NextStep(); // 这个函数会加载新飞机从而修改next_plane.time
+				if(!ok)
+				{
+					MessageBox("文件已经处理完毕了……");
+					break;
+				}
+			}
+			CString output = pDoc->GetOutput();
+			p_edit->SetWindowText(output);
+			pDoc->ClearOutput();
+		}
+
+		CDC* pdc = GetDC();
+		OnDraw(pdc);
+		pdc->DeleteDC();
 	}
 	else if( green_icon_rect.PtInRect(point) || yellow_icon_rect.PtInRect(point) || red_icon_rect.PtInRect(point))
 	{

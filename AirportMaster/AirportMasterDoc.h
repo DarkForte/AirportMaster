@@ -25,6 +25,8 @@ public:
 	CAirplane plane_in_q[5][30];
 
 	CString output_buffer;
+
+	bool have_next;
 // ²Ù×÷
 public:
 	void ArrangeLanes();

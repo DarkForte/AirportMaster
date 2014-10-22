@@ -265,8 +265,9 @@ bool CAirportMasterDoc::NeedTransport(int fuel, int size)
 bool CAirportMasterDoc::ReadNext(CAirplane &target)
 {
 	string plane_name, go_time, arrive_time;
-	if(fin>>plane_name>>go_time>>arrive_time == false)
+	if( fin>>plane_name>>go_time>>arrive_time == false )
 	{
+		//next_plane.time = INF;
 		return false;
 	}
 	
@@ -366,7 +367,7 @@ bool CAirportMasterDoc::NextStep()
 	}
 
 	//process new plane
-	while(next_plane.time == now_time)
+	while(next_plane.time == now_time && have_next)
 	{
 		if(next_plane.arrive == true)
 		{
@@ -377,20 +378,23 @@ bool CAirportMasterDoc::NextStep()
 			NewOff(next_plane);
 		}
 
-		bool ok = ReadNext(next_plane);
-		if(!ok)
-		{// still have to wait until all lane empty
-			bool all_lane_empty = true;
-			for(i=1; i<=3; i++)
+		have_next = ReadNext(next_plane);
+	}
+
+	if(!have_next)
+	{// still have to wait until all lane and q empty
+		bool all_lane_empty = true;
+		for(i=1; i<=3; i++)
+		{
+			if(lane[i].empty() == false)
 			{
-				if(lane[i].empty() == false)
-				{
-					all_lane_empty = false;
-					break;
-				}
+				all_lane_empty = false;
+				break;
 			}
-			if(all_lane_empty)
-				return false;
+		}
+		if(all_lane_empty && land_q.empty() && take_off_q.empty() && emergency_q.empty() ) // all q empty
+		{
+			return false;
 		}
 	}
 
